@@ -1,0 +1,43 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # FastAPI application service
+  web:
+    build: . # Build from the Dockerfile in the current directory
+    ports:
+      - "8000:8000" # Map host port 8000 to container port 8000
+    environment:
+      # These variables will be loaded from your .env file locally.
+      # When deploying, you'd set these directly in your environment or orchestrator.
+      # SUPABASE_SECRET_KEY: "your_actual_supabase_jwt_secret" # Replace with your Supabase JWT secret
+      # DATABASE_URL: "postgresql+asyncpg://user:password@host:port/database" # Replace with your Supabase connection string
+      # Ensure you create a .env file at the root with these variables.
+      # For local testing, you can uncomment and fill them here, but .env is preferred.
+    env_file:
+      - .env # Load environment variables from .env file
+    depends_on:
+      # If you were running a local PostgreSQL alongside, it would depend on 'db'
+      # For Supabase, this dependency isn't strictly necessary for the 'db' service below,
+      # as Supabase is an external service. However, it's good practice to show how
+      # a local DB would be linked.
+      - db
+    # For production, consider adding restart: unless-stopped
+
+  # Placeholder for a local PostgreSQL database (Optional: for local development without Supabase)
+  # In a real Supabase setup, your DB is hosted externally, so you wouldn't run this.
+  # This is just to show a complete local environment setup.
+  db:
+    image: postgres:13-alpine # Use a lightweight PostgreSQL image
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/ # Persist database data
+    environment:
+      POSTGRES_DB: postgres # Default database name
+      POSTGRES_USER: postgres # Default user
+      POSTGRES_PASSWORD: postgres # Default password
+    ports:
+      - "5432:5432" # Expose PostgreSQL port (optional, good for local dev/inspection)
+    # For production, you'd secure your database more robustly and not expose directly.
+
+volumes:
+  postgres_data: # Define the named volume for PostgreSQL data persistence
