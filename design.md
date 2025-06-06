@@ -45,6 +45,7 @@ Supabase handles user management and authentication. We only need to reference t
 
 * **`sip_transactions` table**
     * `id`: UUID (Primary Key)
+    * `user_id`: UUID (Foreign Key to `users.id`, for direct user filtering and RLS) **<-- ADDED THIS**
     * `sip_id`: UUID (Foreign Key to `sips.id`)
     * `transaction_date`: date (Date of actual SIP deduction/unit allocation)
     * `amount_invested`: numeric (Actual amount invested for that month)
@@ -132,6 +133,12 @@ Background tasks are essential for processing data asynchronously and handling s
         CREATE POLICY "Users can delete their own sips." ON sips
         FOR DELETE USING (auth.uid() = user_id);
         ```
+    * Example Supabase RLS policy for `sip_transactions` table (with `user_id`):
+        ```sql
+        CREATE POLICY "Users can view their own sip transactions." ON sip_transactions
+        FOR SELECT USING (auth.uid() = user_id);
+        -- Similar policies for INSERT, UPDATE, DELETE would also be added.
+        ```
 * **API Level Authorization**: Even with RLS, it's good practice to add checks at the API level (e.g., `if sip.user_id != current_user_id: raise HTTPException(403)`).
 * **Input Validation**: Pydantic models in FastAPI automatically handle request body validation.
 * **Sensitive Data**: No sensitive user financial data (like bank account numbers) should be stored directly in this system; integrate with regulated payment gateways.
@@ -166,6 +173,7 @@ As the system grows, breaking it down into microservices improves scalability, m
     * Records actual SIP executions (`sip_transactions`).
     * Handles background tasks for monthly SIP deductions/unit allocations.
     * Owns the `sip_transactions` table.
+    * Will likely use `user_id` for direct filtering of user transactions.
 
 * **Portfolio Analytics Service**:
     * Aggregates data from SIP Management, NAV, and Transaction services.
